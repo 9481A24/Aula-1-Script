@@ -1,17 +1,17 @@
 
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Estudos de Redes e Cyber Segurança</title>
+  <title>🔷 Aula Termux – Scanner RTSP Câmeras IP</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      margin: 20px;
       background: #f7f9fc;
       color: #333;
+      margin: 20px;
+      line-height: 1.6;
     }
     h1, h2, h3 {
       color: #005f73;
@@ -19,36 +19,13 @@
     pre {
       background: #e0e0e0;
       padding: 10px;
-      overflow-x: auto;
       border-radius: 5px;
+      overflow-x: auto;
       white-space: pre-wrap;
       word-wrap: break-word;
     }
     code {
       font-family: Consolas, monospace;
-      font-size: 14px;
-    }
-    section {
-      margin-bottom: 30px;
-      padding-bottom: 10px;
-      border-bottom: 1px solid #ccc;
-    }
-    table {
-      border-collapse: collapse;
-      width: 100%;
-      margin-top: 10px;
-    }
-    th, td {
-      border: 1px solid #005f73;
-      padding: 8px;
-      text-align: left;
-    }
-    th {
-      background-color: #005f73;
-      color: white;
-    }
-    ul, ol {
-      margin-left: 20px;
     }
     .note {
       background: #fff3bf;
@@ -56,171 +33,88 @@
       padding: 10px;
       margin: 10px 0;
     }
+    ul {
+      margin-left: 20px;
+    }
   </style>
 </head>
 <body>
 
-  <h1>Script Temux-Scanner WIFI Automatico</h1>
+  <h1>🔷 Script Termux – Scanner RTSP Câmeras IP</h1>
 
-  <section id="intro">
-    <h2>Introdução</h2>
-    <p>Este é seu espaço de estudo para aprender redes, cibersegurança e pentest pelo celular.</p>
-  </section>
+  <h2>📖 1. Instale o Nmap e Curl</h2>
+  <p>No Termux, digite:</p>
+  <pre><code>pkg update
+pkg install nmap
+pkg install curl</code></pre>
 
-  <section id="script-python">
-    <h2>Script Python – Scanner ARP (referência)</h2>
-    <p>Exemplo para rodar em computador com Python e scapy:</p>
-    <pre><code>from scapy.all import ARP, Ether, srp
+  <h2>📝 2. Crie o script</h2>
+  <p>No Termux, digite:</p>
+  <pre><code>nano rtsp_scan.sh</code></pre>
 
-def scan(rede):
-    arp = ARP(pdst=rede)
-    ether = Ether(dst="ff:ff:ff:ff:ff:ff")
-    pacote = ether/arp
+  <p>Cole esse código completo:</p>
+  <pre><code>#!/data/data/com.termux/files/usr/bin/bash
 
-    result = srp(pacote, timeout=3, verbose=0)[0]
+echo "🔷 Scanner RTSP – Buscando câmeras IP na rede..."
 
-    dispositivos = []
-    for enviado, recebido in result:
-        dispositivos.append({"ip": recebido.psrc, "mac": recebido.hwsrc})
-
-    return dispositivos
-
-rede = "192.168.0.1/24"
-dispositivos = scan(rede)
-
-print("Dispositivos encontrados na rede:")
-print("IP\t\tMAC")
-for dispositivo in dispositivos:
-    print(f"{dispositivo['ip']}\t{dispositivo['mac']}")</code></pre>
-  </section>
-
-  <section id="roteadores-e-portas">
-    <h2>IPs e Portas Comuns de Roteadores</h2>
-
-    <h3>🔹 IP padrão dos roteadores mais comuns</h3>
-    <table>
-      <thead>
-        <tr>
-          <th>Marca</th>
-          <th>IP padrão</th>
-          <th>Usuário padrão</th>
-          <th>Senha padrão</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr><td>TP-Link</td><td>192.168.0.1</td><td>admin</td><td>admin</td></tr>
-        <tr><td>D-Link</td><td>192.168.0.1</td><td>admin</td><td>(em branco)</td></tr>
-        <tr><td>Cisco</td><td>192.168.1.1</td><td>admin</td><td>admin</td></tr>
-        <tr><td>Intelbras</td><td>10.0.0.1</td><td>admin</td><td>admin</td></tr>
-        <tr><td>Huawei</td><td>192.168.100.1</td><td>admin</td><td>admin</td></tr>
-        <tr><td>Linksys</td><td>192.168.1.1</td><td>admin</td><td>admin</td></tr>
-        <tr><td>Mikrotik</td><td>192.168.88.1</td><td>admin</td><td>(em branco)</td></tr>
-      </tbody>
-    </table>
-
-    <h3>🔹 Portas comuns usadas por roteadores</h3>
-    <table>
-      <thead>
-        <tr>
-          <th>Porta</th>
-          <th>Serviço</th>
-          <th>Uso comum</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr><td>80</td><td>HTTP</td><td>Interface web padrão (config)</td></tr>
-        <tr><td>443</td><td>HTTPS</td><td>Interface web segura</td></tr>
-        <tr><td>23</td><td>Telnet</td><td>Acesso remoto não seguro</td></tr>
-        <tr><td>22</td><td>SSH</td><td>Acesso remoto seguro</td></tr>
-        <tr><td>7547</td><td>TR-069 (gerenciamento ISP)</td><td>Configuração remota ISP</td></tr>
-        <tr><td>8080</td><td>HTTP alternativo</td><td>Algumas interfaces web</td></tr>
-        <tr><td>554</td><td>RTSP</td><td>Streaming de câmeras IP (se integrado)</td></tr>
-      </tbody>
-    </table>
-
-    <h3>🔹 Como acessar a interface do roteador pelo celular</h3>
-    <ol>
-      <li>Abra Configurações > Wi-Fi > clique na rede conectada e veja o Gateway (IP do roteador).</li>
-      <li>Abra o navegador, digite esse IP (ex: <code>192.168.0.1</code>) e pressione Enter.</li>
-      <li>Coloque usuário e senha padrão (ex: <code>admin/admin</code>), ou veja etiqueta do roteador.</li>
-      <li>Se não funcionar, resetar roteador (segurar botão reset ~10s) mas perde configuração da internet.</li>
-    </ol>
-
-    <h3>🔹 Dicas importantes</h3>
-    <ul>
-      <li>Nunca use IPs públicos para acessar roteadores de terceiros.</li>
-      <li>Faça testes somente em redes onde você tem autorização.</li>
-      <li>Troque as senhas padrão para maior segurança.</li>
-    </ul>
-  </section>
-
-  <section id="scanner-wifi-automatico">
-    <h2>Script Termux – Scanner Wi-Fi Automático</h2>
-    <p>Este script faz:</p>
-    <ul>
-      <li>Mostra gateway e IP do celular</li>
-      <li>Escaneia dispositivos conectados na rede Wi-Fi</li>
-      <li>Escaneia portas comuns de cada dispositivo</li>
-    </ul>
-
-    <h3>🔷 Pré-requisitos</h3>
-    <pre><code>pkg update
-pkg install nmap</code></pre>
-
-    <h3>🔷 Script completo</h3>
-    <pre><code>#!/data/data/com.termux/files/usr/bin/bash
-
-echo "🔷 Verificando IP do gateway (roteador)..."
+# Descobrir o gateway padrão
 gateway=$(ip route | grep default | awk '{print $3}')
 echo "Gateway: $gateway"
 
-echo ""
-echo "🔷 Descobrindo seu IP local..."
-meuip=$(ip addr show wlan0 | grep "inet " | awk '{print $2}' | cut -d/ -f1)
-echo "Seu IP: $meuip"
-
-echo ""
-echo "🔷 Calculando rede para scan..."
+# Descobrir a faixa de rede
 rede=$(echo $gateway | cut -d'.' -f1-3).0/24
 echo "Rede: $rede"
 
-echo ""
-echo "🔷 Escaneando dispositivos conectados na rede..."
-nmap -sn $rede
+# Escanear IPs com porta 554 aberta (RTSP)
+echo "🔷 Escaneando IPs ativos na rede $rede"
+ips=$(nmap -p 554 --open $rede | grep "Nmap scan report for" | awk '{print $5}')
 
-echo ""
-echo "🔷 Iniciando scanner de portas abertas em todos os dispositivos encontrados..."
-
-# Scanner de portas para cada IP encontrado
-for ip in $(nmap -sn $rede | grep "Nmap scan report for" | awk '{print $5}')
+# Testar RTSP em cada IP encontrado
+for ip in $ips
 do
   echo ""
-  echo "📌 Dispositivo: $ip"
-  nmap -sV -p 21,22,23,53,80,443,554,8080,8888 $ip
+  echo "📹 Testando RTSP no IP: $ip"
+  timeout 5 curl -v rtsp://$ip:554 --stderr - | grep -i "rtsp"
 done
 
 echo ""
-echo "✅ Scanner completo."</code></pre>
+echo "✅ Scanner RTSP concluído."</code></pre>
 
-    <h3>🔷 Como salvar no Termux</h3>
-    <ol>
-      <li>Abra Termux</li>
-      <li>Digite <code>nano wifi_scan.sh</code></li>
-      <li>Cole o script acima</li>
-      <li>CTRL + O (enter para salvar) e CTRL + X (sair)</li>
-      <li>Dê permissão: <code>chmod +x wifi_scan.sh</code></li>
-      <li>Rode com: <code>./wifi_scan.sh</code></li>
-    </ol>
+  <h2>✅ 3. Salve e execute</h2>
+  <ul>
+    <li>Para salvar no nano:<br>
+      ➔ Pressione <strong>CTRL + O</strong> e <strong>Enter</strong>
+    </li>
+    <li>Para sair do nano:<br>
+      ➔ Pressione <strong>CTRL + X</strong>
+    </li>
+    <li>Dê permissão de execução:<br>
+      <code>chmod +x rtsp_scan.sh</code>
+    </li>
+    <li>Execute o script:<br>
+      <code>./rtsp_scan.sh</code>
+    </li>
+  </ul>
 
-    <div class="note">
-      ⚠️ <strong>Dicas importantes:</strong>
-      <ul>
-        <li>Use apenas em redes autorizadas</li>
-        <li>Ideal para estudo de segurança e redes no celular</li>
-        <li>Funciona sem root (scanner TCP via nmap)</li>
-      </ul>
-    </div>
-  </section>
+  <div class="note">
+    ⚠️ <strong>Dicas importantes:</strong>
+    <ul>
+      <li>Use apenas em redes onde você tem autorização.</li>
+      <li>Câmeras IP geralmente usam <strong>porta 554 (RTSP)</strong>.</li>
+      <li>Necessário usuário e senha para acessar o vídeo.</li>
+      <li>Para treinamento, use URLs RTSP de teste em laboratórios virtuais.</li>
+    </ul>
+  </div>
+
+  <h2>🔮 Próximo módulo sugerido</h2>
+  <ul>
+    <li>Aula 4 – Sniffer ARP (escuta de rede local)</li>
+    <li>Aula 5 – Força bruta em roteadores (uso ético em laboratório)</li>
+  </ul>
 
 </body>
 </html>
+
+
+
+  
