@@ -112,6 +112,38 @@ echo "✅ Scanner RTSP concluído."</code></pre>
     <li>Aula 5 – Força bruta em roteadores (uso ético em laboratório)</li>
   </ul>
 
+
+
+<h2>✅ Passo a passo rápido</h2>
+
+<pre>
+1. Atualize e instale o Nmap
+No Termux:
+
+pkg update && pkg upgrade
+pkg install nmap
+</pre>
+
+<h2>✅ Copie e cole este script direto no Termux</h2>
+
+<pre>
+nmap -sn 192.168.1.0/24
+echo "==== Scan de portas RTSP de câmeras IP ===="
+nmap -p 554 --open 192.168.1.0/24
+echo "==== Scan rápido de portas comuns ===="
+nmap -p 22,80,443,445 --open 192.168.1.0/24
+</pre>
+
+<h2>🔍 O que esse script faz?</h2>
+
+<pre>
+✅ Linha 1: Lista todos dispositivos conectados no seu Wi-Fi (ping scan).
+✅ Linha 2-3: Busca dispositivos com porta 554 aberta (RTSP), geralmente câmeras IP.
+✅ Linha 4-5: Verifica portas mais comuns abertas (SSH, HTTP, HTTPS, SMB).
+</pre>
+
+  
+  
 </body>
 </html>
 
