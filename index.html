@@ -218,7 +218,192 @@ Perguntas:
 
 
 
+ChatGPT
+Você disse:
+Scanner wifi camera ips mesma rede 
+Passo passo mim ir treinado 
+E depois encontra o como abri camera
+O ChatGPT disse:
+Perfeito! Vamos fazer um passo a passo completo para escanear a rede Wi-Fi, descobrir IPs de câmeras e tentar acessar a câmera IP que estiver na mesma rede. Isso pode ser feito no Termux, usando ferramentas como nmap e o navegador.
 
+🛠️ PRÉ-REQUISITOS:
+Celular conectado à mesma rede Wi-Fi da câmera.
+
+Termux instalado.
+
+Pacotes do Termux atualizados.
+
+Instalar nmap e navegador com suporte HTTP.
+
+✅ ETAPA 1: Preparar o Termux
+Abra o Termux e digite:
+
+pkg update && pkg upgrade -y
+pkg install nmap -y
+✅ ETAPA 2: Descobrir IP da sua rede
+Use o comando:
+
+ip a
+Procure a parte parecida com:
+
+inet 192.168.1.25/24
+O importante é o começo: 192.168.1.0/24 (ou 192.168.0.0/24, etc.)
+
+✅ ETAPA 3: Escanear todos os IPs ativos
+nmap -sn 192.168.1.0/24
+Ele vai listar todos os dispositivos conectados.
+
+✅ ETAPA 4: Escanear portas RTSP (usadas por câmeras)
+nmap -p 554 --open 192.168.1.0/24
+Vai mostrar só os dispositivos com porta 554 aberta (usada por streaming de câmeras).
+
+✅ ETAPA 5: Escanear portas web HTTP/HTTPS
+nmap -p 80,443 --open 192.168.1.0/24
+Isso mostra se a câmera tem painel web, que pode abrir no navegador.
+
+✅ ETAPA 6: Testar os IPs no Navegador
+Com os IPs que apareceram com portas abertas (80 ou 443), digite no navegador:
+
+http://192.168.1.XX
+
+https://192.168.1.XX
+
+Se pedir login, tente combinações padrão:
+
+Usuário	Senha
+admin	admin
+admin	1234
+admin	(vazio)
+✅ ETAPA 7: Acessar streaming RTSP (se não tiver painel)
+Instale o app VLC Player (Android) e use:
+
+rtsp://IP_DA_CAMERA
+Exemplo:
+
+rtsp://192.168.1.50
+Se pedir login, tente padrão.
+
+✅ Quer salvar tudo em arquivo?
+nmap -p 554,80,443 --open 192.168.1.0/24 -oN scan.txt
+cat scan.txt
+🔐 IMPORTANTE:
+Você só pode acessar dispositivos na sua rede doméstica ou com autorização.
+
+Invadir câmera alheia sem permissão é crime.
+
+Se quiser, posso te ajudar a montar um script automático para escanear tudo com um só comando e mostrar os resultados bem organizados. Deseja isso?
+
+Posso também te ensinar a forçar login com dicionário de senhas, se estiver treinando em ambiente autorizado. Deseja seguir?
+
+Você disse:
+Faz codigo pra mim html Igual vc mostro pra mim 
+Pre-requisito 
+Ate
+importante
+O ChatGPT disse:
+Claro! Aqui está um código HTML completo com todas as etapas que te passei — pronto para abrir no navegador ou compartilhar com alguém que também queira aprender a escanear câmeras na rede usando Termux:
+
+✅ scanner-camera.html (pronto para copiar e colar):
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Scanner de Câmeras IP - Termux</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #111;
+      color: #eee;
+      padding: 20px;
+      line-height: 1.6;
+    }
+    h1, h2 {
+      color: #ffc107;
+    }
+    code {
+      background: #222;
+      padding: 3px 6px;
+      border-radius: 4px;
+      display: block;
+      margin: 10px 0;
+      color: #80ff80;
+    }
+    .bloco {
+      background: #1e1e1e;
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Scanner de Câmeras IP na Mesma Rede (Wi-Fi)</h1>
+
+  <div class="bloco">
+    <h2>🛠️ PRÉ-REQUISITOS</h2>
+    <ul>
+      <li>Celular com Termux instalado</li>
+      <li>Estar conectado na mesma rede da câmera</li>
+      <li>Internet funcionando</li>
+    </ul>
+    <code>pkg update && pkg upgrade -y</code>
+    <code>pkg install nmap -y</code>
+  </div>
+
+  <div class="bloco">
+    <h2>✅ ETAPA 1: Descobrir IP da sua rede</h2>
+    <code>ip a</code>
+    <p>Procure algo como <code>inet 192.168.1.25/24</code> (anote o início: <code>192.168.1.0/24</code>)</p>
+  </div>
+
+  <div class="bloco">
+    <h2>✅ ETAPA 2: Escanear dispositivos na rede</h2>
+    <code>nmap -sn 192.168.1.0/24</code>
+  </div>
+
+  <div class="bloco">
+    <h2>✅ ETAPA 3: Procurar câmeras (porta 554 RTSP)</h2>
+    <code>nmap -p 554 --open 192.168.1.0/24</code>
+  </div>
+
+  <div class="bloco">
+    <h2>✅ ETAPA 4: Procurar painéis web (HTTP/HTTPS)</h2>
+    <code>nmap -p 80,443 --open 192.168.1.0/24</code>
+  </div>
+
+  <div class="bloco">
+    <h2>✅ ETAPA 5: Testar IPs no navegador</h2>
+    <p>Tente abrir no navegador:</p>
+    <ul>
+      <li><code>http://192.168.1.XX</code></li>
+      <li><code>https://192.168.1.XX</code></li>
+    </ul>
+    <p>Tente logins comuns:</p>
+    <ul>
+      <li><b>admin / admin</b></li>
+      <li><b>admin / 1234</b></li>
+      <li><b>admin / (vazio)</b></li>
+    </ul>
+  </div>
+
+  <div class="bloco">
+    <h2>✅ ETAPA 6: Ver vídeo da câmera</h2>
+    <p>Instale o app <b>VLC</b> no Android e use:</p>
+    <code>rtsp://192.168.1.50</code>
+  </div>
+
+  <div class="bloco">
+    <h2>✅ EXTRA: Salvar tudo em arquivo</h2>
+    <code>nmap -p 554,80,443 --open 192.168.1.0/24 -oN scan.txt</code>
+    <code>cat scan.txt</code>
+  </div>
+
+  <div class="bloco">
+    <h2>🔐 IMPORTANTE</h2>
+    <p>⚠️ Use apenas na sua rede doméstica ou com permissão.</p>
+    <p>⚠️ Invadir dispositivos sem autorização é crime (Lei Carolina Dieckmann - Brasil).</p>
+  </div>
 
   
   
