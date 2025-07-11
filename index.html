@@ -1,383 +1,172 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>🔷 Aula Termux – Scanner RTSP Câmeras IP</title>
+  <title>Explicação dos Scripts para Localizar Câmeras IP</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      background: #f7f9fc;
-      color: #333;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #121212;
+      color: #e0e0e0;
       margin: 20px;
-      line-height: 1.6;
+      line-height: 1.5;
     }
-    h1, h2, h3 {
-      color: #005f73;
+    h1, h2 {
+      color: #00e676;
     }
     pre {
-      background: #e0e0e0;
-      padding: 10px;
-      border-radius: 5px;
+      background-color: #1e1e1e;
+      padding: 15px;
+      border-radius: 6px;
       overflow-x: auto;
+      border-left: 5px solid #00e676;
+      margin-bottom: 20px;
+      font-size: 14px;
       white-space: pre-wrap;
-      word-wrap: break-word;
     }
-    code {
-      font-family: Consolas, monospace;
-    }
-    .note {
-      background: #fff3bf;
-      border-left: 4px solid #f7b500;
-      padding: 10px;
-      margin: 10px 0;
+    .section {
+      margin-bottom: 40px;
     }
     ul {
-      margin-left: 20px;
+      padding-left: 20px;
+    }
+    p.warning {
+      background-color: #b00020;
+      padding: 10px;
+      border-radius: 4px;
+      font-weight: bold;
+      color: white;
+      max-width: 600px;
     }
   </style>
 </head>
 <body>
+  <h1>📡 Explicação dos Scripts para Localizar Câmeras IP</h1>
 
-  <h1>🔷 Script Termux – Scanner RTSP Câmeras IP</h1>
-
-  <h2>📖 1. Instale o Nmap e Curl</h2>
-  <p>No Termux, digite:</p>
-  <pre><code>pkg update
-pkg install nmap
-pkg install curl</code></pre>
-
-  <h2>📝 2. Crie o script</h2>
-  <p>No Termux, digite:</p>
-  <pre><code>nano rtsp_scan.sh</code></pre>
-
-  <p>Cole esse código completo:</p>
-  <pre><code>#!/data/data/com.termux/files/usr/bin/bash
-
-echo "🔷 Scanner RTSP – Buscando câmeras IP na rede..."
-
-# Descobrir o gateway padrão
-gateway=$(ip route | grep default | awk '{print $3}')
-echo "Gateway: $gateway"
-
-# Descobrir a faixa de rede
-rede=$(echo $gateway | cut -d'.' -f1-3).0/24
-echo "Rede: $rede"
-
-# Escanear IPs com porta 554 aberta (RTSP)
-echo "🔷 Escaneando IPs ativos na rede $rede"
-ips=$(nmap -p 554 --open $rede | grep "Nmap scan report for" | awk '{print $5}')
-
-# Testar RTSP em cada IP encontrado
-for ip in $ips
-do
-  echo ""
-  echo "📹 Testando RTSP no IP: $ip"
-  timeout 5 curl -v rtsp://$ip:554 --stderr - | grep -i "rtsp"
-done
-
-echo ""
-echo "✅ Scanner RTSP concluído."</code></pre>
-
-  <h2>✅ 3. Salve e execute</h2>
-  <ul>
-    <li>Para salvar no nano:<br>
-      ➔ Pressione <strong>CTRL + O</strong> e <strong>Enter</strong>
-    </li>
-    <li>Para sair do nano:<br>
-      ➔ Pressione <strong>CTRL + X</strong>
-    </li>
-    <li>Dê permissão de execução:<br>
-      <code>chmod +x rtsp_scan.sh</code>
-    </li>
-    <li>Execute o script:<br>
-      <code>./rtsp_scan.sh</code>
-    </li>
-  </ul>
-
-  <div class="note">
-    ⚠️ <strong>Dicas importantes:</strong>
+  <div class="section" id="script1">
+    <h2>🔍 Script 1 — Busca de Câmeras Públicas com Shodan (Python)</h2>
+    <p><strong>O que faz:</strong></p>
     <ul>
-      <li>Use apenas em redes onde você tem autorização.</li>
-      <li>Câmeras IP geralmente usam <strong>porta 554 (RTSP)</strong>.</li>
-      <li>Necessário usuário e senha para acessar o vídeo.</li>
-      <li>Para treinamento, use URLs RTSP de teste em laboratórios virtuais.</li>
+      <li>Usa a API do <a href="https://shodan.io" target="_blank" style="color:#00e676;">Shodan</a> para encontrar câmeras IP abertas no Brasil</li>
+      <li>Busca dispositivos com a porta 554 (RTSP) aberta</li>
+      <li>Mostra IP, porta, cidade e provedor da câmera</li>
+      <li>Salva os resultados em um arquivo chamado <code>cameras_encontradas.txt</code></li>
+      <li>Permite abrir os links das câmeras no navegador diretamente do Termux</li>
     </ul>
+
+    <p><strong>Script completo:</strong></p>
+    <pre>
+import shodan
+import os
+
+API_KEY = "SUA_API_AQUI"  # 👉 Coloque sua API Key do site https://shodan.io
+
+api = shodan.Shodan(API_KEY)
+
+query = 'port:554 country:BR "network camera"'
+
+print("🔎 Procurando câmeras públicas no Brasil...\n")
+
+try:
+    results = api.search(query)
+    total = results['total']
+    print(f"📡 Foram encontradas {total} câmeras públicas.\n")
+
+    links = []
+    for cam in results['matches'][:20]:  # até 20 câmeras
+        ip = cam['ip_str']
+        port = cam['port']
+        city = cam.get('location', {}).get('city', 'Sem cidade')
+        org = cam.get('org', 'Desconhecido')
+
+        link = f"http://{ip}:{port}"
+        print(f"📍 {link} | Cidade: {city} | Provedor: {org}")
+        print("-" * 50)
+        links.append(f"{link} - {city} - {org}")
+
+    # Salva no arquivo
+    with open("cameras_encontradas.txt", "w") as f:
+        for linha in links:
+            f.write(linha + "\n")
+
+    print("\n💾 Arquivo salvo como 'cameras_encontradas.txt'\n")
+
+    # Pergunta se quer abrir os links
+    resposta = input("🔗 Deseja abrir os links no navegador agora? (s/n): ")
+    if resposta.lower() == "s":
+        for cam_link in links:
+            url = cam_link.split(" - ")[0]
+            os.system(f"termux-open-url {url}")
+
+except shodan.APIError as e:
+    print(f"Erro na API: {e}")
+    </pre>
+
+    <p><strong>Exemplo de saída no terminal:</strong></p>
+    <pre>
+🔎 Procurando câmeras públicas no Brasil...
+
+📡 Foram encontradas 1450 câmeras públicas.
+
+📍 http://189.112.15.101:8080 | Cidade: São Paulo | Provedor: Vivo
+--------------------------------------------------
+📍 http://201.54.99.222:81    | Cidade: Belo Horizonte | Provedor: Oi
+--------------------------------------------------
+📍 http://143.106.241.12:554  | Cidade: Campinas | Provedor: RNP
+--------------------------------------------------
+
+💾 Arquivo salvo como 'cameras_encontradas.txt'
+
+🔗 Deseja abrir os links no navegador agora? (s/n):
+    </pre>
   </div>
 
-  <h2>🔮 Próximo módulo sugerido</h2>
-  <ul>
-    <li>Aula 4 – Sniffer ARP (escuta de rede local)</li>
-    <li>Aula 5 – Força bruta em roteadores (uso ético em laboratório)</li>
-  </ul>
-
-
-
-<h2>✅ Passo a passo rápido</h2>
-
-<pre>
-1. Atualize e instale o Nmap
-No Termux:
-
-pkg update && pkg upgrade
-pkg install nmap
-</pre>
-
-<h2>✅ Copie e cole este script direto no Termux</h2>
-
-<pre>
-nmap -sn 192.168.1.0/24
-echo "==== Scan de portas RTSP de câmeras IP ===="
-nmap -p 554 --open 192.168.1.0/24
-echo "==== Scan rápido de portas comuns ===="
-nmap -p 22,80,443,445 --open 192.168.1.0/24
-</pre>
-
-<h2>🔍 O que esse script faz?</h2>
-
-<pre>
-✅ Linha 1: Lista todos dispositivos conectados no seu Wi-Fi (ping scan).
-✅ Linha 2-3: Busca dispositivos com porta 554 aberta (RTSP), geralmente câmeras IP.
-✅ Linha 4-5: Verifica portas mais comuns abertas (SSH, HTTP, HTTPS, SMB).
-</pre>
-
-
-
-
-
-
-
-<h2>✅ 1. Primeiro: O que significa porta aberta ou fechada?</h2>
-
-<pre>
-🔓 Porta aberta:
-- O dispositivo está ouvindo conexões naquela porta.
-- Exemplo: Porta 554 aberta → provavelmente tem câmera IP com RTSP ativo.
-
-🔒 Porta fechada:
-- Não está aceitando conexões externas nessa porta naquele momento.
-</pre>
-
-<h2>🔍 2. O que fazer quando encontra porta aberta?</h2>
-
-<pre>
-✔ A. Identificar o serviço
-Use:
-nmap -sV -p [porta] [ip]
-
-Exemplo:
-nmap -sV -p 554 192.168.1.10
-
-Isso mostra qual serviço está rodando, versão, etc.
-</pre>
-
-<pre>
-✔ B. Tentar conectar ao serviço
-
-- Porta 554 (RTSP) → usar apps como VLC:
-  rtsp://192.168.1.10:554
-
-- Porta 80 ou 443 (HTTP/HTTPS) → abrir no navegador.
-
-- Porta 22 (SSH) → conectar com:
-  ssh usuario@192.168.1.10
-</pre>
-
-<pre>
-✔ C. Analisar a segurança
-
-Perguntas:
-1. Esse serviço deveria estar aberto?
-2. Tem autenticação forte?
-3. Está atualizado ou tem falhas conhecidas?
-</pre>
-
-<h2>⚠️ 3. Muito importante – Ética e Legislação</h2>
-
-<pre>
-✔ Somente teste redes que você tenha autorização (sua, laboratório, estágio).
-❌ Tentar acesso sem autorização é crime de invasão (Lei 12.737/2012 – Brasil).
-</pre>
-
-<h2>💡 4. Depois, qual o próximo passo nos estudos?</h2>
-
-<pre>
-✅ Mapeamento completo da rede:
-   IPs, dispositivos e serviços.
-
-✅ Testes de vulnerabilidades:
-   Ferramentas como Nikto, Nessus, Metasploit (avançado).
-
-✅ Planejar mitigação:
-   - Desativar portas desnecessárias
-   - Usar firewall e VPN
-   - Atualizar firmwares e sistemas
-</pre>
-
-
-
-
-ChatGPT
-Você disse:
-Scanner wifi camera ips mesma rede 
-Passo passo mim ir treinado 
-E depois encontra o como abri camera
-O ChatGPT disse:
-Perfeito! Vamos fazer um passo a passo completo para escanear a rede Wi-Fi, descobrir IPs de câmeras e tentar acessar a câmera IP que estiver na mesma rede. Isso pode ser feito no Termux, usando ferramentas como nmap e o navegador.
-
-🛠️ PRÉ-REQUISITOS:
-Celular conectado à mesma rede Wi-Fi da câmera.
-
-Termux instalado.
-
-Pacotes do Termux atualizados.
-
-Instalar nmap e navegador com suporte HTTP.
-
-✅ ETAPA 1: Preparar o Termux
-Abra o Termux e digite:
-
-pkg update && pkg upgrade -y
-pkg install nmap -y
-✅ ETAPA 2: Descobrir IP da sua rede
-Use o comando:
-
-ip a
-Procure a parte parecida com:
-
-inet 192.168.1.25/24
-O importante é o começo: 192.168.1.0/24 (ou 192.168.0.0/24, etc.)
-
-✅ ETAPA 3: Escanear todos os IPs ativos
-nmap -sn 192.168.1.0/24
-Ele vai listar todos os dispositivos conectados.
-
-✅ ETAPA 4: Escanear portas RTSP (usadas por câmeras)
-nmap -p 554 --open 192.168.1.0/24
-Vai mostrar só os dispositivos com porta 554 aberta (usada por streaming de câmeras).
-
-✅ ETAPA 5: Escanear portas web HTTP/HTTPS
-nmap -p 80,443 --open 192.168.1.0/24
-Isso mostra se a câmera tem painel web, que pode abrir no navegador.
-
-✅ ETAPA 6: Testar os IPs no Navegador
-Com os IPs que apareceram com portas abertas (80 ou 443), digite no navegador:
-
-http://192.168.1.XX
-
-https://192.168.1.XX
-
-Se pedir login, tente combinações padrão:
-
-Usuário	Senha
-admin	admin
-admin	1234
-admin	(vazio)
-✅ ETAPA 7: Acessar streaming RTSP (se não tiver painel)
-Instale o app VLC Player (Android) e use:
-
-rtsp://IP_DA_CAMERA
-Exemplo:
-
-rtsp://192.168.1.50
-Se pedir login, tente padrão.
-
-✅ Quer salvar tudo em arquivo?
-nmap -p 554,80,443 --open 192.168.1.0/24 -oN scan.txt
-cat scan.txt
-🔐 IMPORTANTE:
-Você só pode acessar dispositivos na sua rede doméstica ou com autorização.
-
-Invadir câmera alheia sem permissão é crime.
-
-Se quiser, posso te ajudar a montar um script automático para escanear tudo com um só comando e mostrar os resultados bem organizados. Deseja isso?
-
-Posso também te ensinar a forçar login com dicionário de senhas, se estiver treinando em ambiente autorizado. Deseja seguir?
-
-Você disse:
-Faz codigo pra mim html Igual vc mostro pra mim 
-Pre-requisito 
-Ate
-importante
-O ChatGPT disse:
-Claro! Aqui está um código HTML completo com todas as etapas que te passei — pronto para abrir no navegador ou compartilhar com alguém que também queira aprender a escanear câmeras na rede usando Termux:
-
-<h1>✅ scanner-camera.html (pronto para copiar e colar):</h1>
-
-
-  <h1>Scanner de Câmeras IP na Mesma Rede (Wi-Fi)</h1>
-
-  <div class="bloco">
-    <h2>🛠️ PRÉ-REQUISITOS</h2>
+  <div class="section" id="script2">
+    <h2>📶 Script 2 — Scanner de Câmeras na Rede Local (Wi-Fi) com Nmap</h2>
+    <p><strong>O que faz:</strong></p>
     <ul>
-      <li>Celular com Termux instalado</li>
-      <li>Estar conectado na mesma rede da câmera</li>
-      <li>Internet funcionando</li>
+      <li>Escaneia sua rede Wi-Fi local para encontrar dispositivos com portas comuns de câmeras abertas</li>
+      <li>Procura nas portas 554, 80, 81, 8080, 8000 e 8888</li>
+      <li>Mostra os IPs e as portas abertas no seu terminal</li>
+      <li>Permite você abrir no navegador a câmera encontrada, digitando o IP e a porta</li>
     </ul>
-    <code>pkg update && pkg upgrade -y</code>
-    <code>pkg install nmap -y</code>
+
+    <p><strong>Como instalar o Nmap no Termux:</strong></p>
+    <pre>
+pkg update && pkg install nmap -y
+    </pre>
+
+    <p><strong>Comando para escanear a rede local (exemplo para rede 192.168.0.0/24):</strong></p>
+    <pre>
+nmap -sV -p 554,80,81,8080,8000,8888 --open 192.168.0.0/24
+    </pre>
+
+    <p><strong>Se seu roteador usa rede 192.168.1.0, use:</strong></p>
+    <pre>
+nmap -sV -p 554,80,81,8080,8000,8888 --open 192.168.1.0/24
+    </pre>
+
+    <p><strong>Exemplo de saída no terminal:</strong></p>
+    <pre>
+Nmap scan report for 192.168.0.105
+PORT     STATE SERVICE VERSION
+554/tcp  open  rtsp    Generic IP camera streaming
+8080/tcp open  http    IP Webcam
+    </pre>
+
+    <p><strong>Como abrir a câmera no navegador:</strong></p>
+    <p>Copie o IP e a porta mostrados, por exemplo:</p>
+    <pre>http://192.168.0.105:8080</pre>
+    <p>Abra esse endereço no navegador para acessar a câmera (se estiver aberta e disponível).</p>
   </div>
 
-  <div class="bloco">
-    <h2>✅ ETAPA 1: Descobrir IP da sua rede</h2>
-    <code>ip a</code>
-    <p>Procure algo como <code>inet 192.168.1.25/24</code> (anote o início: <code>192.168.1.0/24</code>)</p>
+  <div class="section">
+    <h2>⚠️ Aviso Legal</h2>
+    <p class="warning">
+      Use esses scripts apenas para fins educacionais ou para testar sua própria rede e dispositivos que você tem autorização para acessar. 
+      Acessar dispositivos sem permissão é ilegal e antiético.
+    </p>
   </div>
 
-  <div class="bloco">
-    <h2>✅ ETAPA 2: Escanear dispositivos na rede</h2>
-    <code>nmap -sn 192.168.1.0/24</code>
-  </div>
-
-  <div class="bloco">
-    <h2>✅ ETAPA 3: Procurar câmeras (porta 554 RTSP)</h2>
-    <code>nmap -p 554 --open 192.168.1.0/24</code>
-  </div>
-
-  <div class="bloco">
-    <h2>✅ ETAPA 4: Procurar painéis web (HTTP/HTTPS)</h2>
-    <code>nmap -p 80,443 --open 192.168.1.0/24</code>
-  </div>
-
-  <div class="bloco">
-    <h2>✅ ETAPA 5: Testar IPs no navegador</h2>
-    <p>Tente abrir no navegador:</p>
-    <ul>
-      <li><code>http://192.168.1.XX</code></li>
-      <li><code>https://192.168.1.XX</code></li>
-    </ul>
-    <p>Tente logins comuns:</p>
-    <ul>
-      <li><b>admin / admin</b></li>
-      <li><b>admin / 1234</b></li>
-      <li><b>admin / (vazio)</b></li>
-    </ul>
-  </div>
-
-  <div class="bloco">
-    <h2>✅ ETAPA 6: Ver vídeo da câmera</h2>
-    <p>Instale o app <b>VLC</b> no Android e use:</p>
-    <code>rtsp://192.168.1.50</code>
-  </div>
-
-  <div class="bloco">
-    <h2>✅ EXTRA: Salvar tudo em arquivo</h2>
-    <code>nmap -p 554,80,443 --open 192.168.1.0/24 -oN scan.txt</code>
-    <code>cat scan.txt</code>
-  </div>
-
-  <div class="bloco">
-    <h2>🔐 IMPORTANTE</h2>
-    <p>⚠️ Use apenas na sua rede doméstica ou com permissão.</p>
-    <p>⚠️ Invadir dispositivos sem autorização é crime (Lei Carolina Dieckmann - Brasil).</p>
-  </div>
-
-  
-  
 </body>
 </html>
-
-
-
-  
